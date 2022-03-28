@@ -10,11 +10,11 @@ from libCaminoCritico import CaminoCritico
 
 
 class MainFrame(Frame):
-    archivoExcel = ""
-    dataFrame = ""
-    auxInput = []
-    rutaCritica = ''
-    
+    archivoExcel = ""  #Variable que mantiene en menoria el archivo excel seleccionado
+    dataFrame = ""  #Variable que mantiene el dataframe de pandas que se genero a partir de archivoExcel
+    auxInput = []   #Vector auxziliar que mantiene el input de los usuarios cuando insertan las tareas manualmente
+    rutaCritica = '' #Lista que recibe los resultados del algoritmo de CPM 
+                    #(forwardPass, backwardPass y la ruta critica en si)
     def __init__(self, master=None):
         super().__init__(master, width=800, height= 660)
         self.master = master        
@@ -23,53 +23,107 @@ class MainFrame(Frame):
         claseCPM = CaminoCritico
         self.create_widgets(claseExcel,claseCPM)  
 
-    def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
+    #Funcion que recoge el input realizado por el usuario cuando presionan el boton "Agregar"
+    #Necesita que se le pasen los textbox con los input y la tabla a modificar
+    def recolectarInput(self,input1,input2,input3,input4,tabla):
+        #Se recogen los input de cada textbot (tkinter Entry)
         ident = input1.get()
         opciones.append(ident)
         desc = input2.get()
         duracion = input3.get()
         predec = input4.get()
+        #Si no tiene predecesor se le coloca NaN para que no haya error con el algoritmo implementado
         if predec == '':
             predec = float("NaN")
             self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
         else:
             self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
+        #Se inserta en la tabla de la interfaz de estado inicial
         tabla.insert("",END,text=ident, values=(predec,desc,duracion))
-        
-    
+
+    #Se llama a una funcion en libExcel que permite la carga de un archivo en disco
+    #y se inserta lo del archivo en la tabla de la interfaz de estado inicial
+    #Necesita que se le pase la clase de libExcel y la tabla a modificar
     def cargarArchivo(self, excel,tabla1):
+        #LLamamos a la funcion en libExcel para que abra y procese el archivo
         self.dataFrame, self.archivoExcel = excel.abrir_archivo()
+        #Si no se escogio archivo alguno se le avisa al usuario 
         if(self.archivoExcel == ""):
             messagebox.showinfo(title="Advertencia", message = "No seleccionaste ningun archivo") 
         else:
+        #Si se escogio un archivo se agrega a la tabla de la interfaz
             for x in range(0,self.dataFrame['identificacion'].size):
                 tabla1.insert("",END,text=self.dataFrame['identificacion'][x]
                     ,values=(self.dataFrame['predecessors'][x],self.dataFrame['descripcion'][x]
                         ,self.dataFrame['duracion'][x]))
 
-
+    #Funcion que de acuerdo a como se hayan ingresado los datos rellena las tablas de forwardpass
+    # y backward pass
+    #Necesita que se le pase la clase de libCaminoCritico y las tablas a modificar
     def llenarTablas(self,llenadoTabla,tabla1,tabla2):
+        #Variable auxiliar
         informacion = ''
+        #Verificaciones basicas dependiendo de como se hayan ingresado los datos
         if (self.archivoExcel == "" and len(self.auxInput)==0):
             messagebox.showinfo(title="Advertencia", message = "No hay datos ingresados")
+        #La clase libCaminoCritico tiene metodos diferentes para procesar la informacion recibirda
+        #(si se ingreso por excel o manual)
         elif self.archivoExcel == "":
             informacion = llenadoTabla.procesarInput(CaminoCritico,self.auxInput) 
         elif len(self.auxInput)==0:
             informacion = llenadoTabla.procesarArchivo(CaminoCritico,self.dataFrame)
 
+        #Luego de recibida la info de los metodos de libCaminoCritico se inserta en las respectivas
+        #tablas de la interfaz
         if informacion != '':
             self.rutaCritica = informacion
             Fp = informacion.forwardPass
             bP = informacion.backwardPass
             indices = Fp.index
+            #Insercion en tabla de forwardPass
             for x in range(0,Fp['earlyFinish'].size):
                 tabla1.insert("",END,text=indices[x],values=(Fp['earlyFinish'][x],Fp['earlyStart'][x]))
             indices = bP.index
+            #Insercion en tabla de backwardPass
             for x in range(0,bP['lateStart'].size):
                 tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
-       
 
-        
+    #Funcion que rellena los textbox que indican ruta critica y si hay holgura
+    #Necesita que se le pasen todos los textbox a modificar
+    def llenarTextbox(self,resp1,resp2,resp3,resp4,resp5):
+        #Modificando el textbox de si existe RC
+        if resp1 != '':
+            resp1.insert(0,"Si hay ruta critica")
+        else:
+            resp1.insert(0,"No hay ruta critica")
+        #Modificando el textbox que indica cual es la RC
+        resp2.insert(0,self.rutaCritica.criticalPath)
+        #Modificando el textbox que pregunta si hay holgura
+        auxBp = self.rutaCritica.backwardPass
+        hasSlack = False
+        for x in range(0,auxBp['slack'].size):
+            if auxBp['slack'][x] > 0:
+                hasSlack = True
+                break
+        if hasSlack == False:
+            resp3.insert(0,"No posee holgura")
+        else:
+            resp3.insert(0,"Si posee holgura")
+            #Modificando el textbox que indica 
+            #la cantidad de eventos qe tienen holgura
+            indicesHolgura = []
+            cantidadholgura = []
+            for x in range(0,auxBp['slack'].size):
+                if auxBp['slack'][x] > 0:
+                    indicesHolgura.append(auxBp.index[x])
+                    cantidadholgura.append(auxBp['slack'][x])
+            resp4.insert(0,len(indicesHolgura))
+            #Modificando el textbox que indica los eventos que tienen 
+            #holgura con su respectiva holgura
+            resp5Text = ''
+            for x in range(0,len(indicesHolgura)):
+                resp5Text = resp5Text + str(indicesHolgura[x]) +' -> '+ str(cantidadholgura[x]) + '\n'
+            resp5.insert(0,resp5Text)
         
     def create_widgets(self,excel,llenadoTabla):
  
@@ -261,7 +315,8 @@ class MainFrame(Frame):
         self.btnA.place(x=430,y=110, width=100)
 
         self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
-            ,command=lambda: self.llenarTablas(llenadoTabla,tv1,tv2))            
+            ,command=lambda: [self.llenarTablas(llenadoTabla,tv1,tv2)
+                ,self.llenarTextbox(txt_existeRC,txt_RC,txt_holgura,txt_contador,txt_listaHolgura)])
         self.btnRC.place(x=590,y=110, width=190)
 
         self.btnExcel=Button(self,text="Archivo Excel",command=lambda: self.cargarArchivo(excel,tv) and rbt_manual.config(state=DISABLED), state = DISABLED)
