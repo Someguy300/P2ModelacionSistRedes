@@ -1,3 +1,4 @@
+from cgitb import text
 from tkinter import CENTER, END, Label,Button, Entry, Frame, Radiobutton, Scrollbar
 from tkinter import ttk
 from tkinter.ttk import Combobox
@@ -13,6 +14,7 @@ class MainFrame(Frame):
     dataFrame = ""
     auxInput = []
     rutaCritica = ''
+    
     def __init__(self, master=None):
         super().__init__(master, width=800, height= 660)
         self.master = master        
@@ -21,8 +23,9 @@ class MainFrame(Frame):
         claseCPM = CaminoCritico
         self.create_widgets(claseExcel,claseCPM)  
 
-    def recolectarInput(self,input1,input2,input3,input4,tabla):
+    def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
         ident = input1.get()
+        opciones.append(ident)
         desc = input2.get()
         duracion = input3.get()
         predec = input4.get()
@@ -32,7 +35,7 @@ class MainFrame(Frame):
         else:
             self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
         tabla.insert("",END,text=ident, values=(predec,desc,duracion))
-
+        
     
     def cargarArchivo(self, excel,tabla1):
         self.dataFrame, self.archivoExcel = excel.abrir_archivo()
@@ -64,7 +67,7 @@ class MainFrame(Frame):
             indices = bP.index
             for x in range(0,bP['lateStart'].size):
                 tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
-
+       
 
         
         
@@ -91,64 +94,83 @@ class MainFrame(Frame):
 
         # textbox
         #input1
-        txt_id = Entry(self, bg="white")
+        txt_id = Entry(self, bg="white", state= DISABLED)
         txt_id.place(x=20, y=70, width=100, height=20)
 
         #input2
-        txt_des = Entry(self, bg="white")
+        txt_des = Entry(self, bg="white", state= DISABLED)
         txt_des.place(x=140, y=70, width=270, height=20)
 
         #input3
-        txt_du = Entry(self, bg="white")
+        txt_du = Entry(self, bg="white", state= DISABLED)
         txt_du.place(x=430, y=70, width=100, height=20)
 
         #respuesta1
-        txt_existeRC = Entry(self, bg="white")
+        txt_existeRC = Entry(self, bg="white", state= DISABLED)
         txt_existeRC.place(x=590, y=225, width=190, height=20)
         
         #respuesta2
-        txt_RC = Entry(self, bg="white")
+        txt_RC = Entry(self, bg="white", state= DISABLED)
         txt_RC.place(x=590, y=285, width=190, height=20)
         
         #respuesta3
-        txt_holgura = Entry(self, bg="white")
+        txt_holgura = Entry(self, bg="white", state= DISABLED)
         txt_holgura.place(x=590, y=345, width=190, height=20)
        
         #respuesta4
-        txt_contador = Entry(self, bg="white")
+        txt_contador = Entry(self, bg="white", state= DISABLED)
         txt_contador.place(x=590, y=405, width=190, height=20)
 
         #respuesta5
-        txt_listaHolgura = Entry(self, bg="white")
+        txt_listaHolgura = Entry(self, bg="white", state= DISABLED)
         txt_listaHolgura.place(x=590, y=465, width=190, height=100)
 
         #input4
-        txt_pre = Entry(self, bg="white")
+        txt_pre = Entry(self, bg="white" , state= DISABLED)
         txt_pre.place(x=260, y=110, width=150, height=20)
+
+
+        
+
         
         # radiobuttons        
         
-        rbt_unico = Radiobutton(self, text= "Único")
+        num = IntVar()
+        rbt_unico = Radiobutton(self, text= "Único", state= DISABLED, value=1, variable=num,  command=lambda: num_predecesores(num.get()))
         rbt_unico.place(x=20,y=110)
-        rbt_varios = Radiobutton(self, text= "Varios")
+        rbt_varios = Radiobutton(self, text= "Varios", state= DISABLED, value=2, variable=num, command=lambda: num_predecesores(num.get()))
         rbt_varios.place(x=75,y=110)
         
-        rbt_manual = Radiobutton(self, text= "Manual",)
+        opcion = IntVar()
+        rbt_manual = Radiobutton(self, text= "Manual", value=1, variable=opcion, command=lambda: actualiza(opcion.get()))
         rbt_manual.place(x=140,y=10)
-        rbt_archivo = Radiobutton(self, text= "Archivo")
-        rbt_archivo.place(x=260,y=10)
+        rbt_archivo = Radiobutton(self, text= "Archivo", value=2, variable=opcion, command=lambda: actualiza(opcion.get()))
+        rbt_archivo.place(x=260,y=10)     
+       
 
-        #opcion = IntVar()
-        #rbt_manual = Radiobutton(self, text= "Manual", variable=opcion, value=1)
-        #rbt_manual.place(x=140,y=10)
-        #rbt_archivo = Radiobutton(self, text= "Archivo", variable=opcion, value=2)
-        #rbt_archivo.place(x=260,y=10)
 
         # combo_box
 
-        self.opciones=["Hola", "Holax2", "Holax3"]
-        Combobox(self, values=self.opciones, state="readonly").place(x=140,y=110, width=100)
+        self.opciones=["Ninguno"]
+        self.lista_auxiliar = self.opciones
+        cmb_pre = Combobox(self, values=self.lista_auxiliar, state= DISABLED)        
+        cmb_pre.place(x=140,y=110, width=100)
+
+        def string_pre(pre, new):
+
+            if pre != "":
+                    pre = pre + ','+ new
+                    txt_pre.config(text= pre)  
+            else:
+                pre = new
+                txt_pre.config(text= pre)  
+
+               
+                 
+        cmb_pre.bind("<<ComboboxSelected>>", lambda _ : string_pre(txt_pre.get(), cmb_pre.get()) and self.lista_auxiliar.remove(cmb_pre.get()))
         
+
+
 
         # tabla datos iniciales
 
@@ -230,18 +252,59 @@ class MainFrame(Frame):
         scroll_syn.pack(side='right', fill='y')
         scroll_syn.config(command = multiple_yview )
 
+        
+
         # buttons
 
         self.btnA=Button(self,text="Agregar"
-            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv))
+            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones) and cmb_pre.configure(values= self.opciones), state = DISABLED)
         self.btnA.place(x=430,y=110, width=100)
 
         self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
-            ,command=lambda: self.llenarTablas(llenadoTabla,tv1,tv2))
+            ,command=lambda: self.llenarTablas(llenadoTabla,tv1,tv2))            
         self.btnRC.place(x=590,y=110, width=190)
 
-        self.btnExcel=Button(self,text="Archivo Excel",command=lambda: self.cargarArchivo(excel,tv))
+        self.btnExcel=Button(self,text="Archivo Excel",command=lambda: self.cargarArchivo(excel,tv) and rbt_manual.config(state=DISABLED), state = DISABLED)
         self.btnExcel.place(x=430,y=10, width=100) 
+
+        def actualiza(opcion):	
+
+            if opcion == 1:
+                self.btnExcel.configure(state= DISABLED)  
+                self.btnA.configure(state= NORMAL)   
+                txt_id.configure(state= NORMAL)
+                txt_du.configure(state= NORMAL)
+                cmb_pre.configure(state= NORMAL)
+                txt_des.configure(state= NORMAL)
+               
+                rbt_unico.configure(state= NORMAL)                
+                rbt_varios.configure(state= NORMAL)    
+            
+            else:
+                self.btnExcel.configure(state= NORMAL)  
+                self.btnA.configure(state= DISABLED)                
+                txt_id.configure(state= DISABLED)
+                txt_du.configure(state= DISABLED)
+                txt_des.configure(state= DISABLED)
+                cmb_pre.configure(state= DISABLED)
+               
+                rbt_unico.configure(state= DISABLED)
+                rbt_varios.configure(state= DISABLED)
+
+        def num_predecesores(num):	
+
+            if num == 1:                  
+                if txt_pre.get() != "":
+                    cmb_pre.configure(state= DISABLED)  
+                else:
+                    cmb_pre.configure(state= NORMAL)
+                              
+        
+
+                
+
+                
+
 
         # cambio de estado para radiobuttons
         #if opcion == 1:
