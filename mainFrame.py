@@ -3,19 +3,73 @@ from tkinter import ttk
 from tkinter.ttk import Combobox
 from tkinter import *
 from tkinter.constants import DISABLED, NORMAL
+from tkinter import  messagebox
 from libExcel import Excel
+from libCaminoCritico import CaminoCritico
 
 
 class MainFrame(Frame):
+    archivoExcel = ""
+    dataFrame = ""
+    auxInput = []
+    rutaCritica = ''
     def __init__(self, master=None):
         super().__init__(master, width=800, height= 660)
         self.master = master        
-        self.pack() 
-        self.create_widgets()      
-             
+        self.pack()
+        claseExcel = Excel 
+        claseCPM = CaminoCritico
+        self.create_widgets(claseExcel,claseCPM)  
+
+    def recolectarInput(self,input1,input2,input3,input4,tabla):
+        ident = input1.get()
+        desc = input2.get()
+        duracion = input3.get()
+        predec = input4.get()
+        if predec == '':
+            predec = float("NaN")
+            self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
+        else:
+            self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
+        tabla.insert("",END,text=ident, values=(predec,desc,duracion))
+
+    
+    def cargarArchivo(self, excel,tabla1):
+        self.dataFrame, self.archivoExcel = excel.abrir_archivo()
+        if(self.archivoExcel == ""):
+            messagebox.showinfo(title="Advertencia", message = "No seleccionaste ningun archivo") 
+        else:
+            for x in range(0,self.dataFrame['identificacion'].size):
+                tabla1.insert("",END,text=self.dataFrame['identificacion'][x]
+                    ,values=(self.dataFrame['predecessors'][x],self.dataFrame['descripcion'][x]
+                        ,self.dataFrame['duracion'][x]))
+
+
+    def llenarTablas(self,llenadoTabla,tabla1,tabla2):
+        informacion = ''
+        if (self.archivoExcel == "" and len(self.auxInput)==0):
+            messagebox.showinfo(title="Advertencia", message = "No hay datos ingresados")
+        elif self.archivoExcel == "":
+            informacion = llenadoTabla.procesarInput(CaminoCritico,self.auxInput) 
+        elif len(self.auxInput)==0:
+            informacion = llenadoTabla.procesarArchivo(CaminoCritico,self.dataFrame)
+
+        if informacion != '':
+            self.rutaCritica = informacion
+            Fp = informacion.forwardPass
+            bP = informacion.backwardPass
+            indices = Fp.index
+            for x in range(0,Fp['earlyFinish'].size):
+                tabla1.insert("",END,text=indices[x],values=(Fp['earlyFinish'][x],Fp['earlyStart'][x]))
+            indices = bP.index
+            for x in range(0,bP['lateStart'].size):
+                tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
+
+
         
-    def create_widgets(self):
-            
+        
+    def create_widgets(self,excel,llenadoTabla):
+ 
         # labels
         Label(self,text="CARGA DE DATOS").place(x=20,y=10)
         Label(self,text="_____________________________________________________________________________________________________").place(x=20,y=30)
@@ -36,30 +90,39 @@ class MainFrame(Frame):
 
 
         # textbox
+        #input1
         txt_id = Entry(self, bg="white")
         txt_id.place(x=20, y=70, width=100, height=20)
 
+        #input2
         txt_des = Entry(self, bg="white")
         txt_des.place(x=140, y=70, width=270, height=20)
 
+        #input3
         txt_du = Entry(self, bg="white")
         txt_du.place(x=430, y=70, width=100, height=20)
 
+        #respuesta1
         txt_existeRC = Entry(self, bg="white")
         txt_existeRC.place(x=590, y=225, width=190, height=20)
         
+        #respuesta2
         txt_RC = Entry(self, bg="white")
         txt_RC.place(x=590, y=285, width=190, height=20)
         
+        #respuesta3
         txt_holgura = Entry(self, bg="white")
         txt_holgura.place(x=590, y=345, width=190, height=20)
        
+        #respuesta4
         txt_contador = Entry(self, bg="white")
         txt_contador.place(x=590, y=405, width=190, height=20)
-        
+
+        #respuesta5
         txt_listaHolgura = Entry(self, bg="white")
         txt_listaHolgura.place(x=590, y=465, width=190, height=100)
 
+        #input4
         txt_pre = Entry(self, bg="white")
         txt_pre.place(x=260, y=110, width=150, height=20)
         
@@ -100,9 +163,9 @@ class MainFrame(Frame):
         tv.heading("col2", text="Descripción", anchor=CENTER)
         tv.heading("col3", text="Duración", anchor=CENTER)
 
-        tv.insert("",END,text="Azucar", values=("28","2", "lala"))
-        tv.insert("",END,text="Refresco", values=("16","3", "lala"))
-        tv.insert("",END,text="AQceite", values=("34","1", "lala"))
+        #tv.insert("",END,text="Azucar", values=("28","lala", "12"))
+        #tv.insert("",END,text="Refresco", values=("16","lala", "2"))
+        #tv.insert("",END,text="AQceite", values=("34","lala", "3"))
         tv.place(x=20, y=180, width=510, height=130)
 
         # frame para scrollbar de tabla inicial
@@ -118,20 +181,18 @@ class MainFrame(Frame):
 
         # tabla forward
 
-        tv1 = ttk.Treeview(self, columns=("col1","col2", "col3"))
+        tv1 = ttk.Treeview(self, columns=("col1","col2"))
         tv1.column("#0",width=30)
         tv1.column("col1",width=30, anchor=CENTER)
         tv1.column("col2",width=150, anchor=CENTER)
-        tv1.column("col3",width=50, anchor=CENTER)
 
         tv1.heading("#0", text="Identificador", anchor=CENTER)
-        tv1.heading("col1", text="Predecesor", anchor=CENTER)
-        tv1.heading("col2", text="Descripción", anchor=CENTER)
-        tv1.heading("col3", text="Duración", anchor=CENTER)
+        tv1.heading("col1", text="EarlyFinish", anchor=CENTER)
+        tv1.heading("col2", text="EarlyStart", anchor=CENTER)
 
-        tv1.insert("",END,text="Azucar", values=("28","2", "lala"))
-        tv1.insert("",END,text="Refresco", values=("16","3", "lala"))
-        tv1.insert("",END,text="AQceite", values=("34","1", "lala"))
+        #tv1.insert("",END,text="A", values=("28","2"))
+        #tv1.insert("",END,text="B", values=("16","3"))
+        #tv1.insert("",END,text="C", values=("34","1"))
         tv1.place(x=20, y= 345, width=510, height=130)
         
         # tabla backward
@@ -143,13 +204,13 @@ class MainFrame(Frame):
         tv2.column("col3",width=50, anchor=CENTER)
 
         tv2.heading("#0", text="Identificador", anchor=CENTER)
-        tv2.heading("col1", text="Predecesor", anchor=CENTER)
-        tv2.heading("col2", text="Descripción", anchor=CENTER)
-        tv2.heading("col3", text="Duración", anchor=CENTER)
+        tv2.heading("col1", text="LateStart", anchor=CENTER)
+        tv2.heading("col2", text="LateFinish", anchor=CENTER)
+        tv2.heading("col3", text="Slack", anchor=CENTER)
 
-        tv2.insert("",END,text="Azucar", values=("28","2", "lala"))
-        tv2.insert("",END,text="Refresco", values=("16","3", "lala"))
-        tv2.insert("",END,text="AQceite", values=("34","1", "lala"))
+        #tv2.insert("",END,text="A", values=("28","2", "0"))
+        #tv2.insert("",END,text="B", values=("16","3", "0"))
+        #tv2.insert("",END,text="C", values=("34","1", "0"))
         tv2.place(x=20, y=510, width=510, height=130)
 
         # frame para scrollbar syn de tablas for y back
@@ -171,13 +232,15 @@ class MainFrame(Frame):
 
         # buttons
 
-        self.btnA=Button(self,text="Agregar")
+        self.btnA=Button(self,text="Agregar"
+            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv))
         self.btnA.place(x=430,y=110, width=100)
 
-        self.btnRC=Button(self,text="Pert CMP / Ruta Crítica")
+        self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
+            ,command=lambda: self.llenarTablas(llenadoTabla,tv1,tv2))
         self.btnRC.place(x=590,y=110, width=190)
 
-        self.btnExcel=Button(self,text="Archivo Excel")
+        self.btnExcel=Button(self,text="Archivo Excel",command=lambda: self.cargarArchivo(excel,tv))
         self.btnExcel.place(x=430,y=10, width=100) 
 
         # cambio de estado para radiobuttons

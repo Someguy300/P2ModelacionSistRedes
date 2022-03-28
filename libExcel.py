@@ -2,14 +2,15 @@ from tkinter import *
 from tkinter import  messagebox
 import pandas as pd
 from tkinter import filedialog
+from collections import namedtuple
 
 class Excel:     
 
     def abrir_archivo():
-
         aux = 0
         infiles = ""
         excel = True
+        df = ''
 
         while excel:
             try:
@@ -50,4 +51,15 @@ class Excel:
             except ValueError:
                 messagebox.showinfo(title="Advertencia", message = "El archivo debe ser un archivo Excel")                 
                 continue  
+        data = namedtuple("data", ["df", "infiles"])
+        return data(
+            df,
+            infiles,
+        )
+            
+    
+    
+    
+
+    
   
