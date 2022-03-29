@@ -23,9 +23,6 @@ class MainFrame(Frame):
         claseCPM = CaminoCritico
         self.create_widgets(claseExcel,claseCPM)  
 
-    #Funcion que recoge el input realizado por el usuario cuando presionan el boton "Agregar"
-    #Necesita que se le pasen los textbox con los input y la tabla a modificar
-    
 
     def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
         #Se recogen los input de cada textbot (tkinter Entry)        
@@ -71,69 +68,72 @@ class MainFrame(Frame):
     # y backward pass
     #Necesita que se le pase la clase de libCaminoCritico y las tablas a modificar
     def llenarTablas(self,llenadoTabla,tabla1,tabla2):
-        #Variable auxiliar
-        informacion = ''
-        #Verificaciones basicas dependiendo de como se hayan ingresado los datos
-        if (self.archivoExcel == "" and len(self.auxInput)==0):
-            messagebox.showinfo(title="Advertencia", message = "No hay datos ingresados")
-        #La clase libCaminoCritico tiene metodos diferentes para procesar la informacion recibirda
-        #(si se ingreso por excel o manual)
-        elif self.archivoExcel == "":
-            informacion = llenadoTabla.procesarInput(CaminoCritico,self.auxInput) 
-        elif len(self.auxInput)==0:
-            informacion = llenadoTabla.procesarArchivo(CaminoCritico,self.dataFrame)
+        try:
+            #Variable auxiliar
+            informacion = ''
+            #Verificaciones basicas dependiendo de como se hayan ingresado los datos
+            if (self.archivoExcel == "" and len(self.auxInput)==0):
+                messagebox.showinfo(title="Advertencia", message = "No hay datos ingresados")
+            #La clase libCaminoCritico tiene metodos diferentes para procesar la informacion recibirda
+            #(si se ingreso por excel o manual)
+            elif self.archivoExcel == "":
+                informacion = llenadoTabla.procesarInput(CaminoCritico,self.auxInput) 
+            elif len(self.auxInput)==0:
+                informacion = llenadoTabla.procesarArchivo(CaminoCritico,self.dataFrame)
 
-        #Luego de recibida la info de los metodos de libCaminoCritico se inserta en las respectivas
-        #tablas de la interfaz
-        if informacion != '':
-            self.rutaCritica = informacion
-            Fp = informacion.forwardPass
-            bP = informacion.backwardPass
-            indices = Fp.index
-            #Insercion en tabla de forwardPass
-            for x in range(0,Fp['earlyFinish'].size):
-                tabla1.insert("",END,text=indices[x],values=(Fp['earlyFinish'][x],Fp['earlyStart'][x]))
-            indices = bP.index
-            #Insercion en tabla de backwardPass
-            for x in range(0,bP['lateStart'].size):
-                tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
+            #Luego de recibida la info de los metodos de libCaminoCritico se inserta en las respectivas
+            #tablas de la interfaz
+            if informacion != '':
+                self.rutaCritica = informacion
+                Fp = informacion.forwardPass
+                bP = informacion.backwardPass
+                indices = Fp.index
+                #Insercion en tabla de forwardPass
+                for x in range(0,Fp['earlyFinish'].size):
+                    tabla1.insert("",END,text=indices[x],values=(Fp['earlyFinish'][x],Fp['earlyStart'][x]))
+                indices = bP.index
+                #Insercion en tabla de backwardPass
+                for x in range(0,bP['lateStart'].size):
+                    tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
+        except:
+            messagebox.showinfo(title="Advertencia", message = "Hubo un error al calcular la ruta crítica. \n Por favor cierre el programa, revise los datos agregados e inténtelo nuevamente")
 
     #Funcion que rellena los textbox que indican ruta critica y si hay holgura
     #Necesita que se le pasen todos los textbox a modificar
-    def llenarTextbox(self,resp1,resp2,resp3,resp4,resp5):
-        #Modificando el textbox de si existe RC
-        if resp1 != "":
-            resp1.insert(0,"Si hay ruta critica")
-        else:
-            resp1.insert(0,"No hay ruta critica")
-        #Modificando el textbox que indica cual es la RC
-        resp2.insert(0,self.rutaCritica.criticalPath)
-        #Modificando el textbox que pregunta si hay holgura
-        auxBp = self.rutaCritica.backwardPass
-        hasSlack = False
-        for x in range(0,auxBp['slack'].size):
-            if auxBp['slack'][x] > 0:
-                hasSlack = True
-                break
-        if hasSlack == False:
-            resp3.insert(0,"No posee holgura")
-        else:
-            resp3.insert(0,"Si posee holgura")
-            #Modificando el textbox que indica 
-            #la cantidad de eventos qe tienen holgura
-            indicesHolgura = []
-            cantidadholgura = []
+    def llenarTextbox(self,resp1,resp2,resp3,resp4,resp5):        
+            #Modificando el textbox de si existe RC
+            if resp1 != "":
+                resp1.insert(0,"Si hay ruta critica")
+            else:
+                resp1.insert(0,"No hay ruta critica")
+            #Modificando el textbox que indica cual es la RC
+            resp2.insert(0,self.rutaCritica.criticalPath)
+            #Modificando el textbox que pregunta si hay holgura
+            auxBp = self.rutaCritica.backwardPass
+            hasSlack = False
             for x in range(0,auxBp['slack'].size):
                 if auxBp['slack'][x] > 0:
-                    indicesHolgura.append(auxBp.index[x])
-                    cantidadholgura.append(auxBp['slack'][x])
-            resp4.insert(0,len(indicesHolgura))
-            #Modificando el textbox que indica los eventos que tienen 
-            #holgura con su respectiva holgura
-            resp5Text = ''
-            for x in range(0,len(indicesHolgura)):
-                resp5Text = resp5Text + str(indicesHolgura[x]) +' -> '+ str(cantidadholgura[x]) + '\n'
-            resp5.insert(0,resp5Text)
+                    hasSlack = True
+                    break
+            if hasSlack == False:
+                resp3.insert(0,"No posee holgura")
+            else:
+                resp3.insert(0,"Si posee holgura")
+                #Modificando el textbox que indica 
+                #la cantidad de eventos qe tienen holgura
+                indicesHolgura = []
+                cantidadholgura = []
+                for x in range(0,auxBp['slack'].size):
+                    if auxBp['slack'][x] > 0:
+                        indicesHolgura.append(auxBp.index[x])
+                        cantidadholgura.append(auxBp['slack'][x])
+                resp4.insert(0,len(indicesHolgura))
+                #Modificando el textbox que indica los eventos que tienen 
+                #holgura con su respectiva holgura
+                resp5Text = ''
+                for x in range(0,len(indicesHolgura)):
+                    resp5Text = resp5Text + str(indicesHolgura[x]) +' -> '+ str(cantidadholgura[x]) + ' \n'
+                resp5.insert(0,resp5Text)        
         
     def create_widgets(self,excel,llenadoTabla):
  
@@ -215,7 +215,7 @@ class MainFrame(Frame):
         cmb_pre = Combobox(self, values=self.lista_auxiliar, state= DISABLED)        
         cmb_pre.place(x=140,y=110, width=100)
 
-        def string_pre(pre, new, textbox):              
+        def string_pre(pre, new, textbox):    
             if pre != "":
                     if pre.find(new) == -1:                        
                         pre = pre + ','+ new
