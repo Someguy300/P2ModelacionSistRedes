@@ -1,4 +1,5 @@
 from cgitb import text
+from curses.ascii import isdigit
 from distutils.command.config import config
 from tkinter import CENTER, END, Label,Button, Entry, Frame, Radiobutton, Scrollbar
 from tkinter import ttk
@@ -26,6 +27,8 @@ class MainFrame(Frame):
 
     #Funcion que recoge el input realizado por el usuario cuando presionan el boton "Agregar"
     #Necesita que se le pasen los textbox con los input y la tabla a modificar
+    
+
     def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
         #Se recogen los input de cada textbot (tkinter Entry)
         ident = input1.get()
@@ -41,6 +44,7 @@ class MainFrame(Frame):
             self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
         #Se inserta en la tabla de la interfaz de estado inicial
         tabla.insert("",END,text=ident, values=(predec,desc,duracion))
+        return opciones
 
     #Se llama a una funcion en libExcel que permite la carga de un archivo en disco
     #y se inserta lo del archivo en la tabla de la interfaz de estado inicial
@@ -134,7 +138,7 @@ class MainFrame(Frame):
         Label(self,text="Identificador").place(x=20,y=50)
         Label(self,text="Descripción").place(x=140,y=50)
         Label(self,text="Duración").place(x=430,y=50)
-        Label(self,text="Predecesor").place(x=20,y=92)
+        Label(self,text="Predecesor").place(x=20,y=110)
         Label(self,text="_____________________________________________________________________________________________________").place(x=20,y=130)
         Label(self,text="TABLA DE INICIO").place(x=230,y=155)
         Label(self,text="FORWARD PASS").place(x=230,y=320)
@@ -181,7 +185,7 @@ class MainFrame(Frame):
         txt_listaHolgura.place(x=590, y=465, width=190, height=100)
 
         #input4
-        txt_pre = Entry(self, bg="blue")
+        txt_pre = Entry(self, bg="white")
         txt_pre.place(x=260, y=110, width=150, height=20)
 
 
@@ -190,12 +194,7 @@ class MainFrame(Frame):
         
         # radiobuttons        
         
-        num = IntVar()
-        rbt_unico = Radiobutton(self, text= "Único", state= DISABLED, value=1, variable=num,  command=lambda: num_predecesores(num.get()))
-        rbt_unico.place(x=20,y=110)
-        rbt_varios = Radiobutton(self, text= "Varios", state= DISABLED, value=2, variable=num, command=lambda: num_predecesores(num.get()))
-        rbt_varios.place(x=75,y=110)
-        
+               
         opcion = IntVar()
         rbt_manual = Radiobutton(self, text= "Manual", value=1, variable=opcion, command=lambda: actualiza(opcion.get()))
         rbt_manual.place(x=140,y=10)
@@ -211,21 +210,24 @@ class MainFrame(Frame):
         cmb_pre = Combobox(self, values=self.lista_auxiliar, state= 'readonly')        
         cmb_pre.place(x=140,y=110, width=100)
 
-        def string_pre(pre, new, textbox):
-
-            if pre == "Ninguno":
-                pre = "."
-
+        def string_pre(pre, new, textbox):            
+            print(pre)
+            print(new)
             if pre != "":
                     pre = pre + ','+ new
                     txt_pre.config(text= pre)  
             else:
+                if new == "Ninguno":
+                    new = "." 
                 pre = new 
-                txt_pre.config(text= pre)  
-            textbox.insert(0, pre)          
+            textbox.delete(0, "end")
+            textbox.insert(0, pre) 
+            print(pre)
+            print(new)
+                     
                  
         
-        cmb_pre.bind("<<ComboboxSelected>>", lambda _ : [string_pre(txt_pre.get(), cmb_pre.get(), txt_pre), self.lista_auxiliar.remove(cmb_pre.get()), cmb_pre.config(values=self.lista_auxiliar)])
+        cmb_pre.bind("<<ComboboxSelected>>", lambda _ : [string_pre(txt_pre.get(), cmb_pre.get(), txt_pre)])
 
 
 
@@ -311,10 +313,17 @@ class MainFrame(Frame):
 
         
 
+        def borrar():
+            txt_pre.delete(0, "end")
+            txt_id.delete(0, "end")
+            txt_du.delete(0, "end")
+            txt_des.delete(0, "end")
+
+
         # buttons
 
         self.btnA=Button(self,text="Agregar"
-            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones) and cmb_pre.config(values= self.opciones) , state = DISABLED)
+            ,command=lambda: [cmb_pre.config(values= self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones)), borrar()], state = DISABLED)
         self.btnA.place(x=430,y=110, width=100)
 
         self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
@@ -337,8 +346,7 @@ class MainFrame(Frame):
                 cmb_pre.configure(state= NORMAL)
                 txt_des.configure(state= NORMAL)
                
-                rbt_unico.configure(state= NORMAL)                
-                rbt_varios.configure(state= NORMAL)    
+                    
             
             else:
                 self.btnExcel.configure(state= NORMAL)  
@@ -348,8 +356,7 @@ class MainFrame(Frame):
                 txt_des.configure(state= DISABLED)
                 cmb_pre.configure(state= DISABLED)
                
-                rbt_unico.configure(state= DISABLED)
-                rbt_varios.configure(state= DISABLED)
+               
 
         def num_predecesores(num):	
 
