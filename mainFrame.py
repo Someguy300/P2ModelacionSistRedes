@@ -1,4 +1,5 @@
 from cgitb import text
+from distutils.command.config import config
 from tkinter import CENTER, END, Label,Button, Entry, Frame, Radiobutton, Scrollbar
 from tkinter import ttk
 from tkinter.ttk import Combobox
@@ -25,7 +26,7 @@ class MainFrame(Frame):
 
     #Funcion que recoge el input realizado por el usuario cuando presionan el boton "Agregar"
     #Necesita que se le pasen los textbox con los input y la tabla a modificar
-    def recolectarInput(self,input1,input2,input3,input4,tabla):
+    def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
         #Se recogen los input de cada textbot (tkinter Entry)
         ident = input1.get()
         opciones.append(ident)
@@ -92,7 +93,7 @@ class MainFrame(Frame):
     #Necesita que se le pasen todos los textbox a modificar
     def llenarTextbox(self,resp1,resp2,resp3,resp4,resp5):
         #Modificando el textbox de si existe RC
-        if resp1 != '':
+        if resp1 != "":
             resp1.insert(0,"Si hay ruta critica")
         else:
             resp1.insert(0,"No hay ruta critica")
@@ -160,27 +161,27 @@ class MainFrame(Frame):
         txt_du.place(x=430, y=70, width=100, height=20)
 
         #respuesta1
-        txt_existeRC = Entry(self, bg="white", state= DISABLED)
+        txt_existeRC = Entry(self, bg="white")
         txt_existeRC.place(x=590, y=225, width=190, height=20)
         
         #respuesta2
-        txt_RC = Entry(self, bg="white", state= DISABLED)
+        txt_RC = Entry(self, bg="white")
         txt_RC.place(x=590, y=285, width=190, height=20)
         
         #respuesta3
-        txt_holgura = Entry(self, bg="white", state= DISABLED)
+        txt_holgura = Entry(self, bg="white")
         txt_holgura.place(x=590, y=345, width=190, height=20)
        
         #respuesta4
-        txt_contador = Entry(self, bg="white", state= DISABLED)
+        txt_contador = Entry(self, bg="white")
         txt_contador.place(x=590, y=405, width=190, height=20)
 
         #respuesta5
-        txt_listaHolgura = Entry(self, bg="white", state= DISABLED)
+        txt_listaHolgura = Entry(self, bg="white")
         txt_listaHolgura.place(x=590, y=465, width=190, height=100)
 
         #input4
-        txt_pre = Entry(self, bg="white" , state= DISABLED)
+        txt_pre = Entry(self, bg="blue")
         txt_pre.place(x=260, y=110, width=150, height=20)
 
 
@@ -205,24 +206,26 @@ class MainFrame(Frame):
 
         # combo_box
 
-        self.opciones=["Ninguno"]
-        self.lista_auxiliar = self.opciones
-        cmb_pre = Combobox(self, values=self.lista_auxiliar, state= DISABLED)        
+        self.opciones=[]
+        self.lista_auxiliar =["Ninguno"]
+        cmb_pre = Combobox(self, values=self.lista_auxiliar, state= 'readonly')        
         cmb_pre.place(x=140,y=110, width=100)
 
-        def string_pre(pre, new):
+        def string_pre(pre, new, textbox):
+
+            if pre == "Ninguno":
+                pre = "."
 
             if pre != "":
                     pre = pre + ','+ new
                     txt_pre.config(text= pre)  
             else:
-                pre = new
+                pre = new 
                 txt_pre.config(text= pre)  
-
-               
+            textbox.insert(0, pre)          
                  
-        cmb_pre.bind("<<ComboboxSelected>>", lambda _ : string_pre(txt_pre.get(), cmb_pre.get()) and self.lista_auxiliar.remove(cmb_pre.get()))
         
+        cmb_pre.bind("<<ComboboxSelected>>", lambda _ : [string_pre(txt_pre.get(), cmb_pre.get(), txt_pre), self.lista_auxiliar.remove(cmb_pre.get()), cmb_pre.config(values=self.lista_auxiliar)])
 
 
 
@@ -311,16 +314,18 @@ class MainFrame(Frame):
         # buttons
 
         self.btnA=Button(self,text="Agregar"
-            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones) and cmb_pre.configure(values= self.opciones), state = DISABLED)
+            ,command=lambda: self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones) and cmb_pre.config(values= self.opciones) , state = DISABLED)
         self.btnA.place(x=430,y=110, width=100)
 
         self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
             ,command=lambda: [self.llenarTablas(llenadoTabla,tv1,tv2)
-                ,self.llenarTextbox(txt_existeRC,txt_RC,txt_holgura,txt_contador,txt_listaHolgura)])
+                ,self.llenarTextbox(txt_existeRC,txt_RC,txt_holgura,txt_contador,txt_listaHolgura), self.btnRC.config(state =DISABLED)])
         self.btnRC.place(x=590,y=110, width=190)
 
         self.btnExcel=Button(self,text="Archivo Excel",command=lambda: self.cargarArchivo(excel,tv) and rbt_manual.config(state=DISABLED), state = DISABLED)
         self.btnExcel.place(x=430,y=10, width=100) 
+
+      
 
         def actualiza(opcion):	
 
@@ -352,26 +357,11 @@ class MainFrame(Frame):
                 if txt_pre.get() != "":
                     cmb_pre.configure(state= DISABLED)  
                 else:
-                    cmb_pre.configure(state= NORMAL)
-                              
-        
+                    cmb_pre.configure(state= NORMAL)                          
+            else:
+                    cmb_pre.configure(state= NORMAL) 
 
                 
 
-                
-
-
-        # cambio de estado para radiobuttons
-        #if opcion == 1:
-        #    self.btnExcel.place_forget()      
             
-        #else:
-            #self.btnExcel.configure(state= NORMAL) 
-        #    self.btnExcel.place(x=430,y=10, width=100)            
-        
-        # para hacer lineas
-        # p_aux3 =Frame(self, bg="black")
-        # p_aux3.place(x=570,y=10, width=1, height=640)  
-        #tv.place(x=10, y=170, width=540, height=80)
-
      
