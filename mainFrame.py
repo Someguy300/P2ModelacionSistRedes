@@ -1,5 +1,3 @@
-from cgitb import text
-from curses.ascii import isdigit
 from distutils.command.config import config
 from tkinter import CENTER, END, Label,Button, Entry, Frame, Radiobutton, Scrollbar
 from tkinter import ttk
@@ -36,15 +34,19 @@ class MainFrame(Frame):
         desc = input2.get()
         duracion = input3.get()
         predec = input4.get()
-        #Si no tiene predecesor se le coloca NaN para que no haya error con el algoritmo implementado
-        if predec == '':
-            predec = float("NaN")
-            self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
+        if duracion.isdigit():            
+            #Si no tiene predecesor se le coloca * Para que no haya error con el algoritmo implementado
+            if predec == '':
+                predec = float("*")
+                self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
+            else:
+                self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
+            #Se inserta en la tabla de la interfaz de estado inicial
+            tabla.insert("",END,text=ident, values=(predec,desc,duracion))
+            self.lista_auxiliar = opciones
         else:
-            self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
-        #Se inserta en la tabla de la interfaz de estado inicial
-        tabla.insert("",END,text=ident, values=(predec,desc,duracion))
-        return opciones
+            messagebox.showinfo(title="Advertencia", message="La duracion debe ser numerica")
+        
 
     #Se llama a una funcion en libExcel que permite la carga de un archivo en disco
     #y se inserta lo del archivo en la tabla de la interfaz de estado inicial
@@ -185,7 +187,7 @@ class MainFrame(Frame):
         txt_listaHolgura.place(x=590, y=465, width=190, height=100)
 
         #input4
-        txt_pre = Entry(self, bg="white")
+        txt_pre = Entry(self, bg="white", state=DISABLED)
         txt_pre.place(x=260, y=110, width=150, height=20)
 
 
@@ -207,7 +209,7 @@ class MainFrame(Frame):
 
         self.opciones=[]
         self.lista_auxiliar =["Ninguno"]
-        cmb_pre = Combobox(self, values=self.lista_auxiliar, state= 'readonly')        
+        cmb_pre = Combobox(self, values=self.lista_auxiliar, state= DISABLED)        
         cmb_pre.place(x=140,y=110, width=100)
 
         def string_pre(pre, new, textbox):            
@@ -343,8 +345,10 @@ class MainFrame(Frame):
                 self.btnA.configure(state= NORMAL)   
                 txt_id.configure(state= NORMAL)
                 txt_du.configure(state= NORMAL)
-                cmb_pre.configure(state= NORMAL)
+                cmb_pre.configure(state= 'readonly')
                 txt_des.configure(state= NORMAL)
+
+                txt_pre.configure(state= NORMAL)
                
                     
             
@@ -355,6 +359,7 @@ class MainFrame(Frame):
                 txt_du.configure(state= DISABLED)
                 txt_des.configure(state= DISABLED)
                 cmb_pre.configure(state= DISABLED)
+                txt_pre.configure(state= DISABLED)
                
                
 
