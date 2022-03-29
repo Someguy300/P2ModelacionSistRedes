@@ -3,7 +3,7 @@ from tkinter import Tk
 
 def main():
     root = Tk()
-    root.wm_title("Pepe 2, la revancha")
+    root.wm_title("Segundo Proyecto de Modelación de Sistemas de Redes")
     app = MainFrame(root)
     app.mainloop()
 
