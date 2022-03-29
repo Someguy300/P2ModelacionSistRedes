@@ -212,26 +212,21 @@ class MainFrame(Frame):
         cmb_pre = Combobox(self, values=self.lista_auxiliar, state= DISABLED)        
         cmb_pre.place(x=140,y=110, width=100)
 
-        def string_pre(pre, new, textbox):            
-            print(pre)
-            print(new)
+        def string_pre(pre, new, textbox):              
             if pre != "":
-                    pre = pre + ','+ new
-                    txt_pre.config(text= pre)  
+                    if pre.find(new) == -1:                        
+                        pre = pre + ','+ new
+                        txt_pre.config(text= pre)  
+                    else:
+                        messagebox.showinfo(title="Advertencia", message="No puede repetir predecesores")
             else:
                 if new == "Ninguno":
                     new = "." 
                 pre = new 
             textbox.delete(0, "end")
-            textbox.insert(0, pre) 
-            print(pre)
-            print(new)
-                     
-                 
+            textbox.insert(0, pre)           
         
         cmb_pre.bind("<<ComboboxSelected>>", lambda _ : [string_pre(txt_pre.get(), cmb_pre.get(), txt_pre)])
-
-
 
         # tabla datos iniciales
 
@@ -325,7 +320,7 @@ class MainFrame(Frame):
         # buttons
 
         self.btnA=Button(self,text="Agregar"
-            ,command=lambda: [cmb_pre.config(values= self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones)), borrar()], state = DISABLED)
+            ,command=lambda: [self.recolectarInput(txt_id,txt_des,txt_du,txt_pre,tv, self.opciones), cmb_pre.config(values= self.opciones), borrar()], state = DISABLED)
         self.btnA.place(x=430,y=110, width=100)
 
         self.btnRC=Button(self,text="Pert CMP / Ruta Crítica"
