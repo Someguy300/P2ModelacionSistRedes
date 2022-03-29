@@ -28,24 +28,27 @@ class MainFrame(Frame):
     
 
     def recolectarInput(self,input1,input2,input3,input4,tabla, opciones):
-        #Se recogen los input de cada textbot (tkinter Entry)
+        #Se recogen los input de cada textbot (tkinter Entry)        
         ident = input1.get()
-        opciones.append(ident)
-        desc = input2.get()
-        duracion = input3.get()
-        predec = input4.get()
-        if duracion.isdigit():            
-            #Si no tiene predecesor se le coloca * Para que no haya error con el algoritmo implementado
-            if predec == '':
-                predec = float("*")
-                self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
-            else:
-                self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
-            #Se inserta en la tabla de la interfaz de estado inicial
-            tabla.insert("",END,text=ident, values=(predec,desc,duracion))
-            self.lista_auxiliar = opciones
+        if ident in opciones:
+            messagebox.showinfo(title="Advertencia", message="Ese identificador ya existe")
         else:
-            messagebox.showinfo(title="Advertencia", message="La duracion debe ser numerica")
+            opciones.append(ident)
+            desc = input2.get()
+            duracion = input3.get()
+            predec = input4.get()
+            if duracion.isdigit():            
+                #Si no tiene predecesor se le coloca * Para que no haya error con el algoritmo implementado
+                if predec == '':
+                    predec = float("*")
+                    self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+'.')
+                else:
+                    self.auxInput.append(ident+'-'+desc+'-'+duracion+'-'+predec)
+                #Se inserta en la tabla de la interfaz de estado inicial
+                tabla.insert("",END,text=ident, values=(predec,desc,duracion))
+                self.lista_auxiliar = opciones
+            else:
+                messagebox.showinfo(title="Advertencia", message="La duracion debe ser numerica")
         
 
     #Se llama a una funcion en libExcel que permite la carga de un archivo en disco
