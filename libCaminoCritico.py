@@ -1,7 +1,5 @@
 from tkinter import * 
-from tkinter import  messagebox
 import pandas as pd
-from tkinter import filedialog
 from collections import namedtuple
 
 

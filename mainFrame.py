@@ -1,4 +1,3 @@
-from distutils.command.config import config
 from tkinter import CENTER, END, Label,Button, Entry, Frame, Radiobutton, Scrollbar
 from tkinter import ttk
 from tkinter.ttk import Combobox
@@ -96,7 +95,7 @@ class MainFrame(Frame):
                 for x in range(0,bP['lateStart'].size):
                     tabla2.insert("",END,text=indices[x],values=(bP['lateStart'][x],bP['lateFinish'][x],bP['slack'][x]))
         except:
-            messagebox.showinfo(title="Advertencia", message = "Hubo un error al calcular la ruta crítica. \n Por favor cierre el programa, revise los datos agregados e inténtelo nuevamente")
+            messagebox.showinfo(title="Advertencia", message = "Hubo un error al calcular la ruta crítica. \n Por favor cierre el programa, revise los datos agregados e inténtelo nuevamente. \n Puede ser algun error de tipeo o su grafo tiene ciclos.")
 
     #Funcion que rellena los textbox que indican ruta critica y si hay holgura
     #Necesita que se le pasen todos los textbox a modificar
@@ -361,17 +360,6 @@ class MainFrame(Frame):
                
                
 
-        def num_predecesores(num):	
-
-            if num == 1:                  
-                if txt_pre.get() != "":
-                    cmb_pre.configure(state= DISABLED)  
-                else:
-                    cmb_pre.configure(state= NORMAL)                          
-            else:
-                    cmb_pre.configure(state= NORMAL) 
-
-                
 
             
      
